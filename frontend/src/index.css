@@ -1,0 +1,14 @@
+/* Import Tailwind CSS utilities */
+@import "tailwindcss";
+
+/* Global styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #f1f4f8;
+  color: #263445;
+}
