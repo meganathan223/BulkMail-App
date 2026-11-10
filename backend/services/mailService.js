@@ -4,7 +4,7 @@ const transporter = require("../config/mailTransport");
 const sendBulkEmails = async ({ subject, body, recipients }) => {
   const sentEmails = [];
   const failedEmails = [];
-  console.log("subject", recipients, subject);
+
   // Process one recipient at a time
   for (const recipient of recipients) {
     try {
@@ -15,7 +15,6 @@ const sendBulkEmails = async ({ subject, body, recipients }) => {
         subject: subject,
         text: body,
       });
-      console.log("infor", info);
       sentEmails.push({
         email: recipient,
         messageId: info.messageId,
