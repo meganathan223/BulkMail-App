@@ -1,4 +1,5 @@
 import { useState } from "react";
+import axios from "axios";
 
 import { Send, RotateCcw, Users, Mail, X, CheckCircle } from "lucide-react";
 
@@ -9,6 +10,9 @@ function ComposeMail() {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [recipients, setRecipients] = useState([]);
+
+  // Track whether the backend is currently sending emails
+  const [isSending, setIsSending] = useState(false);
 
   // Store success or error messages
   const [status, setStatus] = useState({
@@ -57,24 +61,60 @@ function ComposeMail() {
   };
 
   // Prepare the data after confirmation
-  const confirmSend = () => {
-    // Create the object that will be sent to Express API later
-    const emailData = {
-      subject: subject.trim(),
-      body: body.trim(),
-      recipients: recipients,
-    };
 
-    // For now, display data in browser console
-    console.log("Email Data:", emailData);
+  const confirmSend = async () => {
+    try {
+      // Show loading state
+      setIsSending(true);
 
-    setShowConfirm(false);
+      // Clear previous message
+      setStatus({ type: "", message: "" });
 
-    // Actual email sending will be added in Step 2 and Step 4
-    setStatus({
-      type: "success",
-      message: `Your email is validated and ready for ${recipients.length} recipients. Backend sending is not connected yet.`,
-    });
+      // Prepare email data
+      const emailData = {
+        subject: subject.trim(),
+        body: body.trim(),
+        recipients: recipients,
+      };
+
+      // Send data to Express backend
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/emails/send`,
+        emailData,
+      );
+
+      // Get sending results from backend
+      const { sentCount, failedCount, failedEmails } = response.data;
+
+      // Display result
+      if (failedCount === 0) {
+        setStatus({
+          type: "success",
+          message: `Successfully sent ${sentCount} emails.`,
+        });
+      } else {
+        setStatus({
+          type: "error",
+          message: `${sentCount} emails sent, ${failedCount} failed. Failed recipients: ${failedEmails.join(", ")}`,
+        });
+      }
+
+      // Close confirmation dialog
+      setShowConfirm(false);
+    } catch (error) {
+      // Handle backend or network errors
+      console.error("Email sending error:", error);
+
+      setStatus({
+        type: "error",
+        message:
+          error.response?.data?.message ||
+          "Unable to connect to the backend. Please try again.",
+      });
+    } finally {
+      // Stop loading whether success or failure
+      setIsSending(false);
+    }
   };
 
   // Reset the entire form
@@ -218,7 +258,7 @@ function ComposeMail() {
               <button
                 type="button"
                 onClick={() => setShowConfirm(false)}
-                className="text-slate-400 hover:text-slate-700"
+                className="text-slate-400 hover:text-slate-700 cursor-pointer"
                 aria-label="Close confirmation"
               >
                 <X size={20} />
@@ -259,7 +299,7 @@ function ComposeMail() {
               <button
                 type="button"
                 onClick={() => setShowConfirm(false)}
-                className="flex-1 border border-slate-300 text-slate-600 py-3 rounded-lg text-sm"
+                className="flex-1 border border-slate-300 text-slate-600 py-3 rounded-lg text-sm cursor-pointer"
               >
                 Go Back
               </button>
@@ -267,10 +307,10 @@ function ComposeMail() {
               <button
                 type="button"
                 onClick={confirmSend}
-                className="flex-1 bg-blue-600 text-white py-3 rounded-lg text-sm flex items-center justify-center gap-2 hover:bg-blue-700"
+                disabled={isSending}
+                className="flex-1 bg-blue-600 text-white py-3 rounded-lg text-sm flex items-center justify-center gap-2 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
               >
-                <CheckCircle size={17} />
-                Confirm
+                {isSending ? "Sending..." : "Confirm & Send"}
               </button>
             </div>
           </div>

@@ -184,7 +184,7 @@ function ExcelUpload({ recipients, setRecipients }) {
           <button
             type="button"
             onClick={removeFile}
-            className="text-slate-500 hover:text-red-600"
+            className="text-slate-500 hover:text-red-600 cursor-pointer"
             aria-label="Remove Excel file"
           >
             <X size={19} />
@@ -242,7 +242,7 @@ function ExcelUpload({ recipients, setRecipients }) {
                 <button
                   type="button"
                   onClick={() => removeRecipient(email)}
-                  className="text-slate-400 hover:text-red-600 ml-2 shrink-0"
+                  className="text-slate-400 hover:text-red-600 ml-2 shrink-0 cursor-pointer"
                   aria-label={`Remove ${email}`}
                 >
                   <X size={16} />
