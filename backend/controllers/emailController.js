@@ -1,5 +1,7 @@
 const { sendBulkEmails } = require("../services/mailService");
+const Email = require("../models/Email");
 
+// POST: Send bulk emails and save campaign history
 const sendEmails = async (req, res) => {
   try {
     // Get email information from React
@@ -29,7 +31,7 @@ const sendEmails = async (req, res) => {
       });
     }
 
-    // Keep the initial test batch small
+    // Limit the number of recipients per request
     if (recipients.length > 50) {
       return res.status(400).json({
         success: false,
@@ -37,9 +39,7 @@ const sendEmails = async (req, res) => {
       });
     }
 
-    // Validate email address format
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
+    // Clean and remove duplicate email addresses
     const cleanedRecipients = [
       ...new Set(
         recipients.map((email) =>
@@ -48,6 +48,9 @@ const sendEmails = async (req, res) => {
       ),
     ];
 
+    // Validate email format
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
     if (cleanedRecipients.some((email) => !emailPattern.test(email))) {
       return res.status(400).json({
         success: false,
@@ -55,29 +58,95 @@ const sendEmails = async (req, res) => {
       });
     }
 
-    // Send emails through Nodemailer
+    // Step 1: Send emails using Nodemailer
     const result = await sendBulkEmails({
       subject: subject.trim(),
       body: body.trim(),
       recipients: cleanedRecipients,
     });
 
-    // Return sending results
-    res.status(200).json({
+    // Step 2: Determine campaign status
+    let status = "failed";
+
+    if (result.sentCount === cleanedRecipients.length) {
+      status = "sent";
+    } else if (result.sentCount > 0) {
+      status = "partial";
+    }
+
+    // Step 3: Save campaign details in MongoDB
+    let savedCampaign = null;
+
+    try {
+      savedCampaign = await Email.create({
+        subject: subject.trim(),
+        body: body.trim(),
+        recipients: cleanedRecipients,
+        sentCount: result.sentCount,
+        failedCount: result.failedCount,
+        failedEmails: result.failedEmails,
+        status,
+        sentAt: new Date(),
+      });
+    } catch (dbError) {
+      // Emails may already have been sent, so don't ask the user to resend
+      console.error("Campaign history save failed:", dbError.message);
+
+      return res.status(200).json({
+        success: result.sentCount > 0,
+        historySaved: false,
+        message:
+          "Email sending finished, but campaign history could not be saved.",
+        sentCount: result.sentCount,
+        failedCount: result.failedCount,
+        failedEmails: result.failedEmails,
+        status,
+      });
+    }
+
+    // Step 4: Return sending and database results
+    return res.status(200).json({
       success: result.sentCount > 0,
+      historySaved: true,
       message: "Email sending process completed",
+      campaignId: savedCampaign._id,
       sentCount: result.sentCount,
       failedCount: result.failedCount,
       failedEmails: result.failedEmails,
+      status,
     });
   } catch (error) {
     console.error("Email sending error:", error.message);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Unable to process email sending",
     });
   }
 };
 
-module.exports = { sendEmails };
+// GET: Fetch previous email campaigns
+const getEmailHistory = async (req, res) => {
+  try {
+    // Get the latest 50 campaigns from MongoDB
+    const emails = await Email.find().sort({ createdAt: -1 }).limit(50);
+
+    res.status(200).json({
+      success: true,
+      count: emails.length,
+      emails,
+    });
+  } catch (error) {
+    console.error("Email history error:", error.message);
+
+    res.status(500).json({
+      success: false,
+      message: "Unable to fetch email history",
+    });
+  }
+};
+
+module.exports = {
+  sendEmails,
+  getEmailHistory,
+};

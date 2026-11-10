@@ -1,12 +1,16 @@
 const express = require("express");
 
-// Import controller function
-const { sendEmails } = require("../controllers/emailController");
+const {
+  sendEmails,
+  getEmailHistory,
+} = require("../controllers/emailController");
 
-// Create router
 const router = express.Router();
 
-// Define POST API route
+// GET: Fetch email campaign history
+router.get("/history", getEmailHistory);
+
+// POST: Send bulk emails
 router.post("/send", sendEmails);
 
 module.exports = router;

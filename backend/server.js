@@ -2,6 +2,9 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 
+// Import database connection
+const connectDB = require("./config/db");
+
 // Import email routes
 const emailRoutes = require("./routes/emailRoutes");
 
@@ -28,7 +31,13 @@ app.get("/", (req, res) => {
 // Register email routes
 app.use("/api/emails", emailRoutes);
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Connect database first, then start server
+const startServer = async () => {
+  await connectDB();
+
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+};
+
+startServer();
