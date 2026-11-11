@@ -1,23 +1,34 @@
-const transporter = require("../config/mailTransport");
+const getBrevoClient = require("../config/brevo");
 
 // Send email to multiple recipients individually
 const sendBulkEmails = async ({ subject, body, recipients }) => {
   const sentEmails = [];
   const failedEmails = [];
 
+  // Initialize Brevo client
+  const brevo = await getBrevoClient();
+
   // Process one recipient at a time
   for (const recipient of recipients) {
     try {
-      // Send email using Nodemailer
-      const info = await transporter.sendMail({
-        from: `"Bulk Mail App" <${process.env.EMAIL_USER}>`,
-        to: recipient,
+      // Send email using Brevo API
+      const result = await brevo.transactionalEmails.sendTransacEmail({
+        sender: {
+          name: "BulkMail",
+          email: process.env.BREVO_FROM_EMAIL,
+        },
+
+        // Brevo expects recipients as objects
+        to: [{ email: recipient }],
+
         subject: subject,
-        text: body,
+        textContent: body,
       });
+
+      // Store successfully accepted email details
       sentEmails.push({
         email: recipient,
-        messageId: info.messageId,
+        messageId: result.messageId,
       });
     } catch (error) {
       // Record recipient if sending fails

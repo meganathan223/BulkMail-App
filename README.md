@@ -1,51 +1,45 @@
-## BulkMail – MERN Stack Application
+# BulkMail Application
 
-A full-stack bulk email application built using the MERN stack. Users can upload Excel files containing recipient email addresses, compose email messages, send bulk emails, and track campaign history.
+A full-stack bulk email application built using the MERN stack and Brevo API. Users can compose emails, upload Excel files containing recipient email addresses, and send emails individually.
 
-### Features
+## Features
 
-- Upload Excel files (`.xlsx`, `.xls`) to import recipient emails.
-- Extract and validate email addresses.
-- Remove duplicate recipients.
-- Compose email subject and message.
-- Send emails individually using Nodemailer and Gmail SMTP.
-- Track successful and failed email deliveries.
-- Store email campaign history in MongoDB.
+- Compose emails with subject and message.
+- Upload Excel files (`.xlsx`, `.xls`) containing recipient emails.
+- Validate email addresses and remove duplicates.
+- Send emails using Brevo API.
+- Track successful and failed sending requests.
+- Store campaign history in MongoDB.
 - View previous email campaigns.
-- Responsive dashboard UI.
 
 ## Tech Stack
 
 ### Frontend
 
-- React.js
-- Vite
+- React.js (Vite)
 - Tailwind CSS
 - React Router DOM
 - Axios
-- Lucide React
 - SheetJS (`xlsx`)
+- Lucide React
 
 ### Backend
 
 - Node.js
 - Express.js
-- Nodemailer
+- Brevo API (`@getbrevo/brevo`)
+- MongoDB
 - Mongoose
 - dotenv
 - CORS
-
-### Database
-
-- MongoDB Atlas
 
 ## Installation and Setup
 
 ### 1. Clone the repository
 
 ```bash
-git clone <your-repository-url>
-cd BulkMail-app
+git clone YOUR_REPOSITORY_URL
+cd BulkMail-App
 ```
 
 ### 2. Frontend setup
@@ -55,13 +49,13 @@ cd frontend
 npm install
 ```
 
-Create a `.env` file inside the frontend folder:
+Create a frontend `.env` file:
 
 ```env
 VITE_API_URL=http://localhost:5000
 ```
 
-Start the frontend:
+Start frontend:
 
 ```bash
 npm run dev
@@ -76,19 +70,19 @@ cd backend
 npm install
 ```
 
-Create a `.env` file inside the backend folder:
+Create a backend `.env` file:
 
 ```env
 PORT=5000
 CLIENT_URL=http://localhost:5173
 
-MAIL_USER=your_email@gmail.com
-MAIL_PASS=your_gmail_app_password
-
 MONGO_URI=your_mongodb_connection_string
+
+BREVO_API_KEY=your_brevo_api_key
+BREVO_FROM_EMAIL=your_verified_sender_email
 ```
 
-Start the backend:
+Start backend:
 
 ```bash
 npm run dev
@@ -96,18 +90,19 @@ npm run dev
 
 ## API Endpoints
 
-| Method | Endpoint              | Description                        |
-| ------ | --------------------- | ---------------------------------- |
-| POST   | `/api/emails/send`    | Send bulk emails and save campaign |
-| GET    | `/api/emails/history` | Retrieve email campaign history    |
+| Method | Endpoint              | Description                |
+| ------ | --------------------- | -------------------------- |
+| POST   | `/api/emails/send`    | Send bulk emails           |
+| GET    | `/api/emails/history` | Get email campaign history |
 
-## Database Structure
+## Important Notes
 
-**Database:** `bulkmail`
+- Keep API keys and database credentials inside `.env`.
+- Never upload `.env` files to GitHub.
+- Configure a verified sender in Brevo.
+- A successful API response means the provider accepted the request; it does not guarantee inbox delivery.
+- Send emails only to recipients who have given permission.
 
-**Collection:** `emails`
+## License
 
-## Future Improvements
-
-- Admin authentication using JWT and bcrypt.
-- Campaign search and status
+This project is created for learning and portfolio purposes.
